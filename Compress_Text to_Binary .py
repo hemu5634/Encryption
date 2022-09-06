@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[33]:
-
-
 import heapq
 import os
 class BinaryTreeNode:
@@ -26,6 +20,7 @@ class Huffman:
         self.path=path
         self.__heap=[] 
         self.__code={}
+        self.__reverseCode={}
         
     
     def frequency_dict(self,txt):
@@ -61,6 +56,7 @@ class Huffman:
             return
         if root.value is not None :
             self.__code[root.value]=curr_bits
+            self.__reverseCode[curr_bits]=root.value
             return
         self.__build_codes_helper(root.left,curr_bits+'0')
         self.__build_codes_helper(root.right,curr_bits+'1')
@@ -131,23 +127,35 @@ class Huffman:
             output.write(final_bytes)
         print("compressed")
         return output_path
-        
-        
-        #return binary file
-        
-        
-
-
-# In[34]:
-
-
-path='/Users/wolf/Desktop/sample.txt'
-h=Huffman(path)
-output_path=h.compress()
-
-
-# In[ ]:
-
-
-
-
+    
+    def __removePadding(self,text):
+        padding=int(text[:8],2)
+        text=text[8:]
+        actual=text[:-1*padding]
+        return actual
+    
+    def __decode(self,text):
+        decodedstr=''
+        bits=''
+        for bit in text:
+            bits+=bit
+            if bits in self.__reverseCode:
+                decodedstr+=self.__reverseCode[bits]
+                bits=''
+        return decodedstr
+    
+    def decompress(self,input_path):
+        file_name,file_extension = os.path.splitext(self.path)
+        output_path = file_name + '_decompressed'+'.txt'
+        with open(input_path,'rb') as file, open(output_path,'w') as output:
+            bitsstring=''
+            byte=file.read(1)
+            while byte :
+                byte=ord(byte)
+                bits=bin(byte)[2:].rjust(8,'0')
+                bitsstring+=bits
+                byte=file.read(1)
+            actual_text = self.__removePadding(bitsstring)
+            decompressed_text = self.__decode(actual_text)
+            output.write(decompressed_text)
+            print('decompressed')
